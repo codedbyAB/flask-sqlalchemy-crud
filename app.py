@@ -6,6 +6,7 @@ from models import User
 
 
 
+
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///project.db"
 
@@ -31,7 +32,7 @@ def receive_data():  #Flask turns JSON → a Python dict
            )
     db.session.add(user)
     db.session.commit()
-    return user
+    return jsonify(user.to_dict()), 201
 
 
         
@@ -43,11 +44,11 @@ def row_delete(id):
        #Before I delete I need to query data
         user_del = db.session.query(User).filter_by(id=id).first()
         if user_del is None:
-               return "This user does not exist"
+               return {"error": "This user does not exist"}, 404
         
         db.session.delete(user_del)
         db.session.commit()
-        return "User has been deleted successfully"
+        return {"Success": "User has been deleted."}, 200
 
              
 
@@ -56,7 +57,8 @@ def row_delete(id):
 @app.route('/get_all', methods=["GET"])
 def get_all():
        my_data = db.session.query(User).all()
-       users = []
+       users = [] 
+       
        for x in my_data:
               info_dict = {
                      "id": x.id,
@@ -64,9 +66,68 @@ def get_all():
                      "dob": x.dob,
                      "career": x.career
               }
-              users.append(info_dict)
-       return jsonify(users)
               
+              users.append(info_dict)
+
+       return jsonify(users)
+
+
+
+
+
+@app.route('/get_id/<id>', methods=["GET"])
+def get_id(id):
+       user_id = db.session.query(User).filter_by(id=id).first()
+       if user_id is None:
+              return jsonify({"error": "User not found"}), 404
+       
+       return jsonify({
+              "id": user_id.id,
+              "full_name": user_id.full_name,
+              "dob": user_id.dob,
+              "career": user_id.career
+       }), 200
+
+
+
+
+
+@app.route('/update/<id>', methods=["PATCH"])
+def update(id):
+       update_user = db.session.query(User).filter_by(id=id).first()
+       store_data = request.get_json()
+       # update_user.full_name = store_data["full_name"]
+       # update_user.dob = store_data["dob"]
+       print(update_user.to_dict())
+
+       if update_user is None:
+              return "User does not exist"
+       if "full_name" in store_data:
+              update_user.full_name = store_data["full_name"]
+       
+       if "career" in store_data:
+              update_user.career = store_data["career"]
+       
+       if "dob" in store_data:
+              update_user.dob = store_data["dob"]
+
+       
+       db.session.commit()
+
+
+       return jsonify(update_user.to_dict()), 200
+          
+       
+      
+
+      
+     
+
+
+
+
+     
+      
 
 
 

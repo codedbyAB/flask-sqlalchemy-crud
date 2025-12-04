@@ -1,4 +1,5 @@
 from db import db
+from sqlalchemy.inspection import inspect
 
 
 
@@ -12,4 +13,11 @@ class User(db.Model):
     career = db.Column(db.String(20), nullable=False)
 
 
-    
+    def to_dict(self):
+            return {
+                c.key: getattr(self, c.key)
+                for c in inspect(self).mapper.column_attrs
+        }
+
+
+
